@@ -61,36 +61,38 @@
 
             for (NSURL *url in imageUrls) {
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                    NSError *error = nil;
-                    // download the image data
-                    NSData *imageData = [[NSData alloc] initWithContentsOfURL:url options:0 error:&error];
-                    if (!error) {
-                        // create a UIImage
-                        UIImage *fullImage = [[UIImage alloc] initWithData:imageData];
+                    @autoreleasepool {
+                        NSError *error = nil;
+                        // download the image data
+                        NSData *imageData = [[NSData alloc] initWithContentsOfURL:url options:0 error:&error];
+                        if (!error) {
+                            // create a UIImage
+                            UIImage *fullImage = [[UIImage alloc] initWithData:imageData];
 
-                        // compress the image
-                        NSData *compressedImageData = UIImageJPEGRepresentation(fullImage, 0.1);
+                            // compress the image
+                            NSData *compressedImageData = UIImageJPEGRepresentation(fullImage, 0.1);
 
-                        // write to local file system
-                        NSString *filename = [ImageCompressorTask sha1OfUrl:url];
-                        NSString *outPath = [NSString stringWithFormat:@"%@/%@.jpg",
-                                                                       [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0],
-                                                                       filename];
+                            // write to local file system
+                            NSString *filename = [ImageCompressorTask sha1OfUrl:url];
+                            NSString *outPath = [NSString stringWithFormat:@"%@/%@.jpg",
+                                                                           [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0],
+                                                                           filename];
 
-                        [compressedImageData writeToFile:outPath options:0 error:&error];
+                            [compressedImageData writeToFile:outPath options:0 error:&error];
 
-                        // prepare result
-                        ImageCompressionResult *result = [[ImageCompressionResult alloc] init];
-                        result.url = url;
-                        result.localPath = outPath;
-                        result.error = error;
+                            // prepare result
+                            ImageCompressionResult *result = [[ImageCompressionResult alloc] init];
+                            result.url = url;
+                            result.localPath = outPath;
+                            result.error = error;
 
-                        @synchronized (results) {
-                            [results addObject:result];
+                            @synchronized (results) {
+                                [results addObject:result];
+                            }
+
+                            // tell the group thread we completed one of the tasks:
+                            dispatch_semaphore_signal(sema);
                         }
-
-                        // tell the group thread we completed one of the tasks:
-                        dispatch_semaphore_signal(sema);
                     }
                 });
             }

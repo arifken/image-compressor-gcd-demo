@@ -37,6 +37,8 @@
 @property(strong) NSArray *imageUrls;
 @property(copy) void (^onComplete)(NSArray *);
 
++ (void)runExample;
+
 - (void) start;
 
 @end
