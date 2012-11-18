@@ -1,11 +1,31 @@
-/*!
- * \file    TaskGroup
- * \project 
- * \author  Andy Rifken 
- * \date    11/17/12.
- *
- */
+/*
+ Copyright (C) 2012 Andy Rifken. All rights reserved.
 
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+ * Neither the name of the author nor the names of its contributors may be used
+   to endorse or promote products derived from this software without specific
+   prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #import "ImageCompressorTask.h"
 #import <CommonCrypto/CommonCrypto.h>
@@ -52,7 +72,7 @@
                         NSData *compressedImageData = UIImageJPEGRepresentation(fullImage, 0.1);
 
                         // write to local file system
-                        NSString *filename = [ImageCompressorTask md5OfURL:url];
+                        NSString *filename = [ImageCompressorTask sha1OfUrl:url];
                         NSString *outPath = [NSString stringWithFormat:@"%@/%@.jpg",
                                                                        [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0],
                                                                        filename];
@@ -92,17 +112,20 @@
 }
 
 
-+ (NSString *)md5OfURL:(NSURL *)url {
-    unsigned char hashedChars[CC_SHA1_DIGEST_LENGTH];
++ (NSString *)sha1OfUrl:(NSURL *)url {
     NSString *urlPath = [[[url standardizedURL] absoluteString] lowercaseString];
-    CC_SHA1([urlPath UTF8String], (unsigned int) [urlPath lengthOfBytesUsingEncoding:NSUTF8StringEncoding], hashedChars);
 
-    NSMutableString *vdigest = [NSMutableString string];
+    unsigned char digestChars[CC_SHA1_DIGEST_LENGTH];
+    CC_SHA1([urlPath UTF8String], (unsigned int) [urlPath lengthOfBytesUsingEncoding:NSUTF8StringEncoding], digestChars);
+
+    NSMutableString *digestString = [[NSMutableString alloc] init];
+
     for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++) {
-        NSString *hexInt = [NSString stringWithFormat:@"%02x", hashedChars[i]];
-        [vdigest appendString:hexInt];
+        NSString *hexInt = [NSString stringWithFormat:@"%02x", digestChars[i]];
+        [digestString appendString:hexInt];
     }
-    return vdigest;
+
+    return digestString;
 }
 
 
